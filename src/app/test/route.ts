@@ -37,7 +37,7 @@ export async function GET() {
             Form Below:
           </h3>
           <div id="difsy-form"></div>
-          <script src="/advanced-contact/41555582"></script>
+          <script src="/js/contact.js"></script>
         </div>
       </div>
     </section>

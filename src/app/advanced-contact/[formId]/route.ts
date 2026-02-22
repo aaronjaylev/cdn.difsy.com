@@ -39,7 +39,8 @@ export async function GET(
   const difsyForm = document.getElementById("difsy-form");
   if (difsyForm) {
     difsyForm.innerHTML = \`${escapedHtml}\`;
-  }
+  }	
+  const form_code = ${formId};
   ${js}	
 })()`;
 
