@@ -529,7 +529,7 @@
     
     <div class="difsy-field">
         <label for="comments">Comments *</label>
-        <textarea id="comments" name="comments" placeholder="Tell us about your project..." autocomplete="off" required></textarea>
+        <textarea id="comments" name="comments" placeholder="How can we help you?" autocomplete="off" required></textarea>
         <span class="difsy-indicator" id="comments_indicator">○</span>
     </div>
     
@@ -808,12 +808,16 @@ async function validatePhoneNumber(phoneNumber) {
     updatePhoneStatus('Validating...');
 
     try {
-        const response = await fetch('/api/validate-phone', {
+        const response = await fetch('https://api.difsy.com/v1/verify-phone', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ phoneNumber }),
+            body: JSON.stringify({
+                form_code,
+                source_url: window.location.href,
+                phoneNumber
+            }),
         });
 
         const result = await response.json();
@@ -992,7 +996,7 @@ function validateField(fieldId) {
     let isValid = false;
 
     if (value === '') {
-        if (fieldId === 'name') { // required
+        if (fieldId === 'name' || fieldId === 'comments') { // required
             // Empty but required
             indicator.innerHTML = '✗';
             indicator.style.color = 'rgb(220, 38, 38)';
