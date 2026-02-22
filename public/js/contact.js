@@ -204,6 +204,18 @@
   font-size: 20px;
   color: rgb(156, 163, 175);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Show indicator after first input */
+#difsy-form span.indicator.show,
+#difsy-form #name_indicator.show,
+#difsy-form #email_indicator.show,
+#difsy-form #location_indicator.show,
+#difsy-form #phone_indicator.show,
+#difsy-form #comments_indicator.show {
+  opacity: 1;
 }
 
 /* Position indicators inside input fields - centered on input height */
@@ -500,7 +512,7 @@
             <div class="difsy-label-row">
                 <label for="location" class="difsy-label">Your Location *</label>
                 <div id="ip_display" class="difsy-ip-display">
-                    IP: <span id="ip_value" class="difsy-ip-value"></span>
+                    <span id="ip_value" class="difsy-ip-value"></span>
                 </div>
             </div>
             <input type="text" id="location" name="location" placeholder="City, State" autocomplete="address-level1" required />
@@ -533,6 +545,13 @@
 let userInteracted = false;
 let phoneValidationResult = null;
 let emailValidationResult = null;
+let fieldFirstInput = {
+    name: false,
+    email: false,
+    location: false,
+    phone: false,
+    comments: false
+};
 let emailDebounceTimer = null;
 
 // Fetch and set IP address along with geolocation
@@ -556,8 +575,8 @@ async function fetchAndSetIPAddress() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                source_url: window.location.href,
                 form_code,
+                source_url: window.location.href
             }),
         });
 
@@ -582,7 +601,7 @@ async function fetchAndSetIPAddress() {
                     if (ipDisplay) {
                         const ipValue = ipDisplay.querySelector("#ip_value");
                         if (ipValue) {
-                            ipValue.textContent = ipAddress;
+                            ipValue.textContent = "IP: " +ipAddress;
                             ipDisplay.classList.add('show');
                         } else {
                             console.log("Aaron ip value not found");
@@ -749,6 +768,8 @@ async function handleSubmit(e) {
 // Format phone number
 async function formatPhoneNumber(e) {
     const input = e.target;
+    showIndicatorOnFirstInput('phone');
+
     const value = input.value.replace(/\D/g, '');
     const length = value.length;
 
@@ -876,18 +897,20 @@ async function validateEmail(email) {
     updateEmailStatus('Validating...');
 
     try {
-        const response = await fetch('/api/email-lookup', {
+        const response = await fetch('https://api.difsy.com/v1/verify-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                email,
-                requestor: window.location.href
+                form_code,
+                source_url: window.location.href,
+                email
             }),
         });
 
         const result = await response.json();
+        console.log("Aaron email result = ", result);
 
         emailValidationResult = {
             valid: result.valid,
@@ -969,9 +992,15 @@ function validateField(fieldId) {
     let isValid = false;
 
     if (value === '') {
-        // Empty - waiting for input
-        indicator.innerHTML = '○';
-        indicator.style.color = 'rgb(156, 163, 175)';
+        if (fieldId === 'name') { // required
+            // Empty but required
+            indicator.innerHTML = '✗';
+            indicator.style.color = 'rgb(220, 38, 38)';
+        } else {
+            // Empty - waiting for input
+            indicator.innerHTML = '○';
+            indicator.style.color = 'rgb(156, 163, 175)';
+        }
     } else if (fieldId === 'email') {
         // Email validation - stricter than HTML5 default
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1077,13 +1106,30 @@ function validateForm(markInteraction = false) {
     }
 }
 
+// Show indicator when field receives input
+function showIndicatorOnFirstInput(fieldId) {
+    if (!fieldFirstInput[fieldId]) {
+        fieldFirstInput[fieldId] = true;
+        const indicator = document.getElementById(`${fieldId}_indicator`);
+        if (indicator) {
+            indicator.classList.add('show');
+        }
+    }
+}
+
 // Handle generic input
-function handleInput() {
+function handleInput(event) {
+    const fieldId = event.target.id;
+    if (fieldId) {
+        showIndicatorOnFirstInput(fieldId);
+    }
     validateForm(true);
 }
 
 // Handle email input
 function handleEmailInput() {
+    showIndicatorOnFirstInput('email');
+
     // Clear any existing debounce timer
     if (emailDebounceTimer) {
         clearTimeout(emailDebounceTimer);
