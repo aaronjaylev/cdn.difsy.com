@@ -414,7 +414,7 @@
   border: none;
   border-radius: 8px;
   cursor: not-allowed;
-  background: rgb(156, 163, 175);
+  background: #9ca3af;
   color: rgb(209, 213, 219);
   opacity: 0.6;
   margin-top: 24px;
@@ -465,6 +465,19 @@
   margin-top: 16px;
 }
 
+@keyframes spin {
+    from {
+        transform: translateY(-50%) rotate(0deg);
+    }
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}  
+
 /* Responsive */
 @media (max-width: 640px) {
   #difsy-form label {
@@ -479,7 +492,8 @@
   #difsy-form .difsy-ip-display {
     max-width: none;
   }
-}</style><div class="difsy-success" id="success_message">
+}  
+</style><div class="difsy-success" id="success_message">
     <svg class="difsy-success-icon" viewBox="0 0 24 24">
         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
     </svg>
@@ -495,13 +509,13 @@
     <div class="difsy-row difsy-row-2">
         <div class="difsy-field">
             <label for="name">Your Name *</label>
-            <input type="text" id="name" name="name" placeholder="John Doe" autocomplete="name" required />
+            <input type="text" id="name" name="name" value="Aaron" placeholder="John Doe" autocomplete="name" required />
             <span class="difsy-indicator" id="name_indicator">○</span>
         </div>
 
         <div class="difsy-field">
             <label for="email">Your Email *</label>
-            <input type="email" id="email" name="email" placeholder="john@example.com" autocomplete="email" required />
+            <input type="email" id="email" name="email" value="aaronjaylev@gmail.com" placeholder="john@example.com" autocomplete="email" required />
             <span class="difsy-indicator" id="email_indicator">○</span>
             <div class="difsy-status" id="email_status"></div>
         </div>
@@ -511,9 +525,7 @@
         <div class="difsy-field">
             <div class="difsy-label-row">
                 <label for="location" class="difsy-label">Your Location *</label>
-                <div id="ip_display" class="difsy-ip-display">
-                    <span id="ip_value" class="difsy-ip-value"></span>
-                </div>
+                <div id="ip_display" class="difsy-ip-display"></div>
             </div>
             <input type="text" id="location" name="location" placeholder="City, State" autocomplete="address-level1" required />
             <span class="difsy-indicator" id="location_indicator">○</span>
@@ -521,7 +533,7 @@
 
         <div class="difsy-field">
             <label for="phone">Your Mobile Phone *</label>
-            <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567" autocomplete="tel" />
+            <input type="tel" id="phone" name="phone" value="(561) 239-6941" placeholder="(555) 123-4567" autocomplete="tel" />
             <span class="difsy-indicator" id="phone_indicator">○</span>
             <div class="difsy-status" id="phone_status"></div>
         </div>
@@ -554,6 +566,32 @@ let fieldFirstInput = {
 };
 let emailDebounceTimer = null;
 
+const loadingSpinnerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="16" viewBox="0 0 64 32" fill="none" aria-label="Loading" role="img" style="display:block;width:100%;height:100%">
+<g fill="currentColor">
+    <rect x="6"  y="14" width="8" height="12" rx="2">
+    <animate attributeName="y" values="18;10;18" dur="0.9s" repeatCount="indefinite" begin="0s"/>
+    <animate attributeName="height" values="8;16;8" dur="0.9s" repeatCount="indefinite" begin="0s"/>
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="0.9s" repeatCount="indefinite" begin="0s"/>
+    </rect>
+    <rect x="20" y="10" width="8" height="16" rx="2">
+    <animate attributeName="y" values="18;6;18" dur="0.9s" repeatCount="indefinite" begin="0.15s"/>
+    <animate attributeName="height" values="8;20;8" dur="0.9s" repeatCount="indefinite" begin="0.15s"/>
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="0.9s" repeatCount="indefinite" begin="0.15s"/>
+    </rect>
+    <rect x="34" y="6" width="8" height="20" rx="2">
+    <animate attributeName="y" values="18;2;18" dur="0.9s" repeatCount="indefinite" begin="0.3s"/>
+    <animate attributeName="height" values="8;24;8" dur="0.9s" repeatCount="indefinite" begin="0.3s"/>
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="0.9s" repeatCount="indefinite" begin="0.3s"/>
+    </rect>
+    <rect x="48" y="10" width="8" height="16" rx="2">
+    <animate attributeName="y" values="18;6;18" dur="0.9s" repeatCount="indefinite" begin="0.45s"/>
+    <animate attributeName="height" values="8;20;8" dur="0.9s" repeatCount="indefinite" begin="0.45s"/>
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="0.9s" repeatCount="indefinite" begin="0.45s"/>
+    </rect>
+</g>
+</svg>`;
+
+
 // Fetch and set IP address along with geolocation
 async function fetchAndSetIPAddress() {
     if (ipAddressFetched) return;
@@ -561,12 +599,17 @@ async function fetchAndSetIPAddress() {
 
     // Call ip-lookup to get geolocation
     const locationIndicator = document.getElementById("location_indicator");
+    const ipDisplay = document.getElementById("ip_display");
 
     try {
         // Show spinner while loading
         if (locationIndicator) {
-            locationIndicator.innerHTML = '⟳';
-            locationIndicator.style.color = 'rgb(37, 99, 235)';
+            locationIndicator.classList.add('show')
+            locationIndicator.innerHTML = loadingSpinnerSVG;
+            locationIndicator.style.color = '#9ca3af';
+
+            ipDisplay.classList.add('show');
+            ipDisplay.innerHTML = 'Loading...';            
         }
 
         const response = await fetch('https://api.difsy.com/v1/ip-lookup', {
@@ -589,7 +632,6 @@ async function fetchAndSetIPAddress() {
                 const locationInput = document.getElementById("location");
 
                 const ipInput = document.getElementById("user_ip_address");
-                const ipDisplay = document.getElementById("ip_display");
 
                 console.log("Aaron debug ipAddress ", ipAddress);
                 console.log("Aaron debug ipDisplay ", ipDisplay);
@@ -599,13 +641,9 @@ async function fetchAndSetIPAddress() {
                         ipInput.value = ipAddress;
                     }
                     if (ipDisplay) {
-                        const ipValue = ipDisplay.querySelector("#ip_value");
-                        if (ipValue) {
-                            ipValue.textContent = "IP: " +ipAddress;
-                            ipDisplay.classList.add('show');
-                        } else {
-                            console.log("Aaron ip value not found");
-                        }
+                        ipDisplay.innerHTML = "IP: " + ipAddress;
+                    } else {
+                        console.log("Aaron ip value not found");
                     }
                 }
       
@@ -680,19 +718,8 @@ async function handleSubmit(e) {
         const firstName = nameParts[0];
         const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-        // Generate session ID (simple UUID-like function)
-        function generateSessionId() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                const r = Math.random() * 16 | 0,
-                    v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
         // Create lead object
         const lead = {
-            session_id: generateSessionId(),
-            form_fill_id: generateSessionId(),
             form_code: "41555582",
             form_name: "simple_contact_v1",
             source_url: window.location.href,
@@ -710,44 +737,40 @@ async function handleSubmit(e) {
         // Try to save to Supabase (optional - may not work without auth)
         console.log("Form data prepared:", lead);
 
+        let formSuccess = 0;
+
         // Send SMS notification
         try {
-            const smsResponse = await fetch('/api/send-notification', {
+            const formSubmitResponse = await fetch('https://api.difsy.com/v1/form-submit', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    firstName,
-                    lastName,
-                    email,
-                    phone,
-                    location,
-                    comments,
-                    userIpAddress,
-                    geolocation,
-                    sourceUrl: window.location.href,
-                }),
+                body: JSON.stringify(lead)
             });
 
-            if (smsResponse.ok) {
-                console.log("SMS notification sent successfully");
+            formSuccess = !!formSubmitResponse.success;
+
+            if (formSuccess) {
+                console.log("Message sent successfully");
             } else {
-                console.error("Failed to send SMS notification");
+                console.error("Message failed to send");
             }
-        } catch (smsError) {
-            console.error("Error sending SMS notification:", smsError);
+        } catch (formError) {
+            console.error("Error sending Form Submit:", formError);
         }
 
-        // Hide form and show success message
-        difsyForm.style.display = 'none';
-        const successMessage = document.getElementById("success_message");
-        const container = successMessage?.parentElement;
-        if (successMessage) {
-            successMessage.style.display = 'flex';
-        }
-        if (container) {
-            container.classList.add('difsy-container-success');
+        if (formSuccess) {
+            // Hide form and show success message
+            difsyForm.style.display = 'none';
+            const successMessage = document.getElementById("success_message");
+            const container = successMessage?.parentElement;
+            if (successMessage) {
+                successMessage.style.display = 'flex';
+            }
+            if (container) {
+                container.classList.add('difsy-container-success');
+            }
         }
     } catch (error) {
         console.error("Error submitting form:", error);
@@ -803,8 +826,9 @@ async function validatePhoneNumber(phoneNumber) {
     if (!indicator) return;
 
     // Show spinner
-    indicator.innerHTML = '⟳';
-    indicator.style.color = 'rgb(37, 99, 235)';
+    indicator.innerHTML = loadingSpinnerSVG;
+    indicator.style.color = '#9ca3af';
+
     updatePhoneStatus('Validating...');
 
     try {
@@ -896,8 +920,8 @@ async function validateEmail(email) {
     if (!indicator) return;
 
     // Show spinner
-    indicator.innerHTML = '⟳';
-    indicator.style.color = 'rgb(37, 99, 235)';
+    indicator.innerHTML = loadingSpinnerSVG;
+    indicator.style.color = '#9ca3af';
     updateEmailStatus('Validating...');
 
     try {
