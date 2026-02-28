@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabaseClient } from '@/lib/supabase';
+import { addCorsHeaders, handleCorsOptions } from '@/lib/cors';
 
 export async function GET(
   request: Request,
@@ -42,14 +43,15 @@ export async function GET(
   }	
   const form_code = ${formId};
   ${js}	
-})()`;
+})()`;	  
 
-    return new NextResponse(javascript, {
+    const response = new NextResponse(javascript, {
       headers: {
         'Content-Type': 'application/javascript; charset=utf-8',
         'Cache-Control': 'public, max-age=3600',
       },
     });
+    return addCorsHeaders(response);
   } catch (err) {
     const errorMessage = `Error loading form: ${err instanceof Error ? err.message : 'Unknown error'}`;
     const escapedError = errorMessage
@@ -65,11 +67,16 @@ export async function GET(
   }
 })()`;
 
-    return new NextResponse(javascript, {
+    const response = new NextResponse(javascript, {
       headers: {
         'Content-Type': 'application/javascript; charset=utf-8',
       },
       status: 500,
     });
+    return addCorsHeaders(response);
   }
+}
+
+export async function OPTIONS() {
+  return handleCorsOptions();
 }

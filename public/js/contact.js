@@ -385,6 +385,11 @@
   display: block;
 }
 
+#difsy-form #submitBtn span {
+    display: inline-block;
+    padding-left: 20px;
+}
+
 /* Custom classes for submit button */
 #difsy-form .difsy-btn-active {
   width: 100%;
@@ -702,7 +707,7 @@ async function handleSubmit(e) {
 
     // Disable button while submitting
     submitButton.disabled = true;
-    submitButton.innerHTML = "Sending...";
+    submitButton.innerHTML = 'Sending...  <span>' + loadingSpinnerSVG + '</span>';
 
     try {
         const name = formData.get("name");
@@ -741,7 +746,7 @@ async function handleSubmit(e) {
 
         // Send SMS notification
         try {
-            const formSubmitResponse = await fetch('https://api.difsy.com/v1/form-submit', {
+            const response = await fetch('https://api.difsy.com/v1/form-submit', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -749,7 +754,9 @@ async function handleSubmit(e) {
                 body: JSON.stringify(lead)
             });
 
-            formSuccess = !!formSubmitResponse.success;
+            const formSubmitResponse = await response.json();
+            formSuccess = formSubmitResponse.success;
+            console.log("Aaron formSuccess = ", formSubmitResponse)
 
             if (formSuccess) {
                 console.log("Message sent successfully");
